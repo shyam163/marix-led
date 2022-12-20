@@ -9,16 +9,11 @@
 #include <Preferences.h>
 #include <WiFiManager.h> 
 
-
-
 #define PANEL_RES_X 64      // Number of pixels wide of each INDIVIDUAL panel module. 
 #define PANEL_RES_Y 32     // Number of pixels tall of each INDIVIDUAL panel module.
 #define PANEL_CHAIN 1      // Total number of panels chained one to another
 #define DAY_OF_INCIDENT 2147397248 //dec 18th unix time stamp
 
-// network credentials
-const char* ssid     = "periyar";
-const char* password = "mrci18yo";
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
@@ -109,39 +104,6 @@ void drawText(int colorWheelOffset)
 //////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
 
-    // WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
-    // it is a good practice to make sure your code sets wifi mode how you want it.
-
-    // put your setup code here, to run once:
-    Serial.begin(115200);
-    
-    //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
-    WiFiManager wm;
-
-    // reset settings - wipe stored credentials for testing
-    // these are stored by the esp library
-    // wm.resetSettings();
-
-    // Automatically connect using saved credentials,
-    // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
-    // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
-    // then goes into a blocking loop awaiting configuration and will return success result
-
-    bool res;
-    // res = wm.autoConnect(); // auto generated AP name from chipid
-    // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
-    res = wm.autoConnect("AutoConnectAP","password"); // password protected ap
-
-    if(!res) {
-        //Serial.println("Failed to connect");
-        // ESP.restart()
-        ;
-    } 
-    else {
-        //if you get here you have connected to the WiFi    
-        //Serial.println("connected...yeey :)")
-        ;
-    }
 
 
   Preferences preferences;
@@ -165,6 +127,57 @@ void setup() {
   dma_display->fillScreen(myWHITE);
 
 
+
+  
+  //texst setup 
+  dma_display->setTextSize(1);     // size 1 == 8 pixels high
+  dma_display->setTextWrap(true); // Don't wrap at end of line - will do ourselves
+  dma_display->setCursor(5, 0);    // start at top left, with 8 pixel of spacing
+  int8_t w = 0;
+  
+  
+
+  // WiFi.mode(WIFI_STA); // explicitly set mode, esp defaults to STA+AP
+  // it is a good practice to make sure your code sets wifi mode how you want it.
+
+  // put your setup code here, to run once:
+  Serial.begin(115200);
+  
+  //WiFiManager, Local intialization. Once its business is done, there is no need to keep it around
+  WiFiManager wm;
+
+  // reset settings - wipe stored credentials for testing
+  // these are stored by the esp library
+  // wm.resetSettings();
+
+  // Automatically connect using saved credentials,
+  // if connection fails, it starts an access point with the specified name ( "AutoConnectAP"),
+  // if empty will auto generate SSID, if password is blank it will be anonymous AP (wm.autoConnect())
+  // then goes into a blocking loop awaiting configuration and will return success result
+
+  bool res;
+  // res = wm.autoConnect(); // auto generated AP name from chipid
+  // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
+  res = wm.autoConnect("shyam","excellent"); // password protected ap
+
+  if(!res) {
+      //Serial.println("Failed to connect");
+      // ESP.restart()
+      dma_display->clearScreen();
+      dma_display->setCursor(5, 0); 
+      dma_display->print("Failed to connect");
+      delay(1000);
+      ESP.restart();
+  } 
+  else {
+      //if you get here you have connected to the WiFi    
+      //Serial.println("connected...yeey :)")
+      dma_display->setCursor(5, 0); 
+      dma_display->clearScreen();
+      dma_display->print(WiFi.localIP());
+      delay(2000);
+  }
+
   // Initialize a NTPClient to get time
   timeClient.begin();
   // Set offset time in seconds to adjust for your timezone, for example:
@@ -174,14 +187,7 @@ void setup() {
   // GMT 0 = 0
   timeClient.setTimeOffset(3600);
 
-  
-  //display the ip
-  dma_display->setTextSize(1);     // size 1 == 8 pixels high
-  dma_display->setTextWrap(true); // Don't wrap at end of line - will do ourselves
-  dma_display->setCursor(5, 0);    // start at top left, with 8 pixel of spacing
-  int8_t w = 0;
-  dma_display->print(WiFi.localIP());
-  
+
   // fix the screen with red
   dma_display->fillRect(0, 0, dma_display->width(), dma_display->height(), dma_display->color444(15, 0, 0));
   delay(500);
