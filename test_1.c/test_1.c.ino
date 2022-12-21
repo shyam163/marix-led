@@ -9,31 +9,29 @@
 #include <Preferences.h>
 #include <WiFiManager.h> 
 
-#define PANEL_RES_X 64      // Number of pixels wide of each INDIVIDUAL panel module. 
-#define PANEL_RES_Y 32     // Number of pixels tall of each INDIVIDUAL panel module.
-#define PANEL_CHAIN 1      // Total number of panels chained one to another
-#define DAY_OF_INCIDENT 2147397248 //dec 18th unix time stamp
+#define PANEL_RES_X 64              // Number of pixels wide of each INDIVIDUAL panel module. 
+#define PANEL_RES_Y 32              // Number of pixels tall of each INDIVIDUAL panel module.
+#define PANEL_CHAIN 1               // Total number of panels chained one to another
+#define DAY_OF_INCIDENT 2147397248  //dec 18th unix time stamp
 
-
-// Define NTP Client to get time
-WiFiUDP ntpUDP;
+WiFiUDP ntpUDP;                     // Define NTP Client to get time
 NTPClient timeClient(ntpUDP);
- 
-// Variables to save date and time
-String formattedDate;
+
+Preferences preferences;
+
+String formattedDate;               // Variables to save date and time
 String dayStamp;
 String timeStamp;
 
-//MatrixPanel_I2S_DMA dma_display;
-MatrixPanel_I2S_DMA *dma_display = nullptr;
+MatrixPanel_I2S_DMA *dma_display = nullptr;                        //MatrixPanel_I2S_DMA dma_display;
 
-uint16_t myBLACK = dma_display->color565(0, 0, 0);
+uint16_t myBLACK = dma_display->color565(0, 0, 0);                 //colors
 uint16_t myWHITE = dma_display->color565(255, 255, 255);
 uint16_t myRED = dma_display->color565(255, 0, 0);
 uint16_t myGREEN = dma_display->color565(0, 255, 0);
 uint16_t myBLUE = dma_display->color565(0, 0, 255);
 
-
+int counter=1;
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
@@ -50,17 +48,32 @@ uint16_t colorWheel(uint8_t pos) {
   }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
+
 void drawText(int colorWheelOffset)
 {
+  //get the current time fron ntp server
+  if(counter%50==0){
+      timeClient.update();                                                   //update time in 50 cuycles    
+  }
+
+  formattedDate = timeClient.getFormattedTime();
+
+  //fill black : screen
+  //dma_display->fillScreen(dma_display->color444(0, 0, 0));
+
+  dma_display->setTextSize(1);     // size 1 == 8 pixels high
+  dma_display->setTextWrap(true); // Do wrap at end of line - cant do ourselves
+  dma_display->setCursor(5, 0);    // start at top left, with 8 pixel of spacing
+  int8_t w = 0;
+
+  //dma_display->print(formattedDate);      //if you want a static display uncomment
   
   // draw text with a rotating colour
 
-  //const char *str = "ESP32 DMA";
-  //for (w=0; w<strlen(str); w++) {
-  //  dma_display->setTextColor(colorWheel((w*32)+colorWheelOffset));
-  //   dma_display->print(str[w]);
-  // }
+  for (w=0; w<(formattedDate.length()); w++) {                               //
+    dma_display->setTextColor(colorWheel((w*32)+colorWheelOffset));          // for ANIMATED TEXT
+    dma_display->print(formattedDate[w]);                                    //
+   }
 
   //dma_display->println();
   //dma_display->print(" ");
@@ -72,7 +85,7 @@ void drawText(int colorWheelOffset)
   dma_display->println();
 
   dma_display->setTextColor(dma_display->color444(15,15,15));
-  dma_display->println("LED MATRIX!");
+  dma_display->println("DAYS SINS");
 
   // print each letter with a fixed rainbow color
   dma_display->setTextColor(dma_display->color444(0,8,15));
@@ -98,15 +111,13 @@ void drawText(int colorWheelOffset)
   dma_display->print("B");
   dma_display->setTextColor(dma_display->color444(15,0,8));
   dma_display->println("*");
+  counter ++;
 
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 void setup() {
 
-
-
-  Preferences preferences;
 
   // Module configuration19800
   HUB75_I2S_CFG mxconfig(
@@ -158,11 +169,10 @@ void setup() {
   bool res;
   // res = wm.autoConnect(); // auto generated AP name from chipid
   // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
-  res = wm.autoConnect("shyam","excellent"); // password protected ap
+  res = wm.autoConnect("shyam=awesome","yes"); // password protected ap
 
   if(!res) {
-      //Serial.println("Failed to connect");
-      // ESP.restart()
+      // didnt connect so we will reset esp
       dma_display->clearScreen();
       dma_display->setCursor(5, 0); 
       dma_display->print("Failed to connect");
@@ -171,7 +181,7 @@ void setup() {
   } 
   else {
       //if you get here you have connected to the WiFi    
-      //Serial.println("connected...yeey :)")
+      //print ip on screen
       dma_display->setCursor(5, 0); 
       dma_display->clearScreen();
       dma_display->print(WiFi.localIP());
@@ -181,10 +191,6 @@ void setup() {
   // Initialize a NTPClient to get time
   timeClient.begin();
   // Set offset time in seconds to adjust for your timezone, for example:
-  // GMT +1 = 3600
-  // GMT +8 = 28800
-  // GMT -1 = -3600
-  // GMT 0 = 0
   timeClient.setTimeOffset(3600);
 
 
@@ -192,28 +198,20 @@ void setup() {
   dma_display->fillRect(0, 0, dma_display->width(), dma_display->height(), dma_display->color444(15, 0, 0));
   delay(500);
 
-  // draw a box in yellow
+  // draw a box line and circle
   //dma_display->drawRect(0, 0, dma_display->width(), dma_display->height(), dma_display->color444(15, 15, 0));
-  //delay(500);
-
-  // draw an 'X' in red
   //dma_display->drawLine(0, 0, dma_display->width()-1, dma_display->height()-1, dma_display->color444(15, 0, 0));
   //dma_display->drawLine(dma_display->width()-1, 0, 0, dma_display->height()-1, dma_display->color444(15, 0, 0));
-  //delay(500);
-
-  // draw a blue circle
   //dma_display->drawCircle(10, 10, 10, dma_display->color444(0, 0, 15));
-  //delay(500);
-
-  // fill a violet circle
   //dma_display->fillCircle(40, 21, 10, dma_display->color444(15, 0, 15));
-  //delay(500);
+
 
   // fill the screen with 'black'
   dma_display->fillScreen(dma_display->color444(0, 0, 0));
 
   //drawText(0);
 
+  timeClient.update();
 }
 
 uint8_t wheelval = 0;
