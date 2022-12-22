@@ -1,18 +1,25 @@
 
-// on a 64x32 LED matrix
-//
+// information board on a 64x32 LED matrix to show how many days passed 
+// since the last saftey incident happened
 
 #include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
+#include <ESP32-VirtualMatrixPanel-I2S-DMA.h>
 #include <WiFi.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <Preferences.h>
 #include <WiFiManager.h> 
+#include <TimeLib.h>
+#include <Fonts/FreeMonoBoldOblique12pt7b.h>
+#include <Fonts/FreeSerif9pt7b.h>
+
 
 #define PANEL_RES_X 64              // Number of pixels wide of each INDIVIDUAL panel module. 
 #define PANEL_RES_Y 32              // Number of pixels tall of each INDIVIDUAL panel module.
 #define PANEL_CHAIN 1               // Total number of panels chained one to another
-#define DAY_OF_INCIDENT 2147397248  //dec 18th unix time stamp
+#define upButton_pin 18              // pin to move the incident date a day back wards
+#define up25Button_pin 21             // pin to move the incident date 25 days back wards 
+#define nowButton_pin 22              // pin to move the incident date to now
 
 WiFiUDP ntpUDP;                     // Define NTP Client to get time
 NTPClient timeClient(ntpUDP);
@@ -24,6 +31,7 @@ String dayStamp;
 String timeStamp;
 
 MatrixPanel_I2S_DMA *dma_display = nullptr;                        //MatrixPanel_I2S_DMA dma_display;
+VirtualMatrixPanel *vdma_display = nullptr;
 
 uint16_t myBLACK = dma_display->color565(0, 0, 0);                 //colors
 uint16_t myWHITE = dma_display->color565(255, 255, 255);
@@ -31,7 +39,13 @@ uint16_t myRED = dma_display->color565(255, 0, 0);
 uint16_t myGREEN = dma_display->color565(0, 255, 0);
 uint16_t myBLUE = dma_display->color565(0, 0, 255);
 
-int counter=1;
+uint counter=1;
+int epochtime=0;
+int incidenttime=1671366600;
+int days=0;
+int  fSize=3;
+int  fStart=4;
+int fStarty=1;
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
@@ -49,26 +63,60 @@ uint16_t colorWheel(uint8_t pos) {
 }
 
 
+
+//void IRAM_ATTR nowPressed(){
+//  incidenttime=epochtime;
+//  dma_display->setCursor(50, 0);
+//  dma_display->print("down");
+//  delay(2000);
+//  dma_display->fillScreen(dma_display->color444(0, 0, 0));
+//}
+ 
+
 void drawText(int colorWheelOffset)
 {
   //get the current time fron ntp server
+
   if(counter%50==0){
-      timeClient.update();                                                   //update time in 50 cuycles    
+      timeClient.update(); 
+      epochtime = timeClient.getEpochTime();                                                   //update time in 50 cuycles    
   }
 
-  formattedDate = timeClient.getFormattedTime();
-
+  days=(epochtime-incidenttime)/86400;
   //fill black : screen
   //dma_display->fillScreen(dma_display->color444(0, 0, 0));
-
-  dma_display->setTextSize(1);     // size 1 == 8 pixels high
-  dma_display->setTextWrap(true); // Do wrap at end of line - cant do ourselves
-  dma_display->setCursor(5, 0);    // start at top left, with 8 pixel of spacing
-  int8_t w = 0;
-
-  //dma_display->print(formattedDate);      //if you want a static display uncomment
   
-  // draw text with a rotating colour
+
+if (days < 10){
+  fStart=9 ;
+  fSize=3;
+  fStarty=1;
+ }
+ else if (days < 100){
+  fStart=5 ;
+  fSize=2;
+  fStarty=6;
+ }
+ else if (days < 1000){
+  fStart=0 ;
+  fSize=2;
+  fStarty=6;
+ }
+ else {
+   ;
+ }
+ 
+
+  //dma_display->setFont(&FreeMonoBoldOblique12pt7b);
+  dma_display->setTextSize(fSize);     // size 1 == 8 pixels high
+  dma_display->setTextWrap(false); // Do wrap at end of line - cant do ourselves
+  dma_display->setCursor(fStart,fStarty);    // start at top left, with 8 pixel of spacing
+  int8_t w = 0;
+  //dma_display->setFont();
+
+ 
+  //dma_display->print(formattedDate);      //if you want a static display uncomment
+  formattedDate = String(days);
 
   for (w=0; w<(formattedDate.length()); w++) {                               //
     dma_display->setTextColor(colorWheel((w*32)+colorWheelOffset));          // for ANIMATED TEXT
@@ -81,49 +129,69 @@ void drawText(int colorWheelOffset)
   //  dma_display->setTextColor(colorWheel((w*32)+colorWheelOffset));
   //  dma_display->print("*");
   //}
+  dma_display->setTextSize(1);  
+  dma_display->setCursor(5,25);
+  dma_display->setTextColor(dma_display->color444(5,5,5));
+  dma_display->println("DAYS");
+
+
+
+  dma_display->setTextSize(1);  
+  dma_display->setCursor(35,1);
+  dma_display->setTextColor(dma_display->color444(5,5,5));
+  dma_display->print("SINCE");
+
+  dma_display->setTextSize(1);  
+  dma_display->setCursor(35,2);
+  dma_display->setTextColor(dma_display->color444(5,5,5));
+  dma_display->print("SINCE");
+
   
-  dma_display->println();
+  dma_display->setTextColor(dma_display->color444(10,4,4));
+  dma_display->setTextSize(1);  
+  dma_display->setCursor(36,12);
+  dma_display->print(day(incidenttime));
 
-  dma_display->setTextColor(dma_display->color444(15,15,15));
-  dma_display->println("DAYS SINS");
+  dma_display->setCursor(47,12);
+  dma_display->print(":");
 
-  // print each letter with a fixed rainbow color
-  dma_display->setTextColor(dma_display->color444(0,8,15));
-  dma_display->print('3');
-  dma_display->setTextColor(dma_display->color444(15,4,0));
-  dma_display->print('2');
-  dma_display->setTextColor(dma_display->color444(15,15,0));
-  dma_display->print('x');
-  dma_display->setTextColor(dma_display->color444(8,15,0));
-  dma_display->print('6');
-  dma_display->setTextColor(dma_display->color444(8,0,15));
-  dma_display->print('4');
+  //dma_display->drawPixel(43,19,5000);
 
-  // Jump a half character
-  dma_display->setCursor(34, 24);
-  dma_display->setTextColor(dma_display->color444(0,15,15));
-  dma_display->print("*");
-  dma_display->setTextColor(dma_display->color444(15,0,0));
-  dma_display->print('R');
-  dma_display->setTextColor(dma_display->color444(0,15,0));
-  dma_display->print('G');
-  dma_display->setTextColor(dma_display->color444(0,0,15));
-  dma_display->print("B");
-  dma_display->setTextColor(dma_display->color444(15,0,8));
-  dma_display->println("*");
+  dma_display->setTextSize(1);  
+  dma_display->setCursor(51,12);
+  dma_display->print(month(incidenttime));
+
+
+  dma_display->setCursor(38,21);            //+9y
+  dma_display->print(year(incidenttime));
+
+  dma_display->setCursor(38,22);            //+9y
+  dma_display->print(year(incidenttime));
+
+  dma_display->drawRect(35, 10, 29, 21, dma_display->color444(8,2,2));
+
   counter ++;
 
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+
 void setup() {
+
+  //dma_display->setFont(&FreeMonoBoldOblique12pt7b);
+
+  pinMode(upButton_pin, INPUT_PULLUP);                                  //initialize button pins
+//  attachInterrupt(upButton_pin,upPressed, RISING);               //and ISR
+  pinMode(up25Button_pin, INPUT_PULLUP);
+//  attachInterrupt(up25Button_pin,up25Pressed, RISING);
+  pinMode(nowButton_pin, INPUT_PULLUP);
+//  attachInterrupt(nowButton_pin,nowPressed, RISING);
 
 
   // Module configuration19800
   HUB75_I2S_CFG mxconfig(
-    PANEL_RES_X,   // module width
-    PANEL_RES_Y,   // module height
-    PANEL_CHAIN    // Chain length
+    PANEL_RES_X,                         // module width
+    PANEL_RES_Y,                         // module height
+    PANEL_CHAIN     // Chain length
   );
 
   //mxconfig.gpio.e = 18;
@@ -135,6 +203,7 @@ void setup() {
   dma_display->begin();
   dma_display->setBrightness8(90); //0-255
   dma_display->clearScreen();
+ // dma_display->setRotation(2)
   dma_display->fillScreen(myWHITE);
 
 
@@ -169,7 +238,7 @@ void setup() {
   bool res;
   // res = wm.autoConnect(); // auto generated AP name from chipid
   // res = wm.autoConnect("AutoConnectAP"); // anonymous ap
-  res = wm.autoConnect("shyam=awesome","yes"); // password protected ap
+  res = wm.autoConnect("shyam_is_awesome","yesyesyes"); // password protected ap
 
   if(!res) {
       // didnt connect so we will reset esp
@@ -212,31 +281,28 @@ void setup() {
   //drawText(0);
 
   timeClient.update();
+  formattedDate = timeClient.getFormattedTime();
+  epochtime = timeClient.getEpochTime();
 }
 
 uint8_t wheelval = 0;
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
 void loop() {
 
     // animate by going through the colour wheel for the first two lines
     drawText(wheelval);
     wheelval +=1;
-
     delay(20); 
-/*
-  drawText(0);
-  delay(2000);
-  dma_display->clearScreen();
-  dma_display->fillScreen(myBLACK);
-  delay(2000);
-  dma_display->fillScreen(myBLUE);
-  delay(2000);
-  dma_display->fillScreen(myRED);
-  delay(2000);
-  dma_display->fillScreen(myGREEN);
-  delay(2000);
-  dma_display->fillScreen(myWHITE);
-  dma_display->clearScreen();
-  */
-  
+    if(digitalRead(upButton_pin)==LOW){
+      incidenttime= incidenttime-8400;
+//      dma_display->fillScreen(dma_display->color444(0, 0, 0));
+      dma_display->setCursor(50, 0);
+      dma_display->fillScreen(dma_display->color444(0, 0, 0));
+    }
+    if(digitalRead(nowButton_pin)==LOW){
+      incidenttime= epochtime;
+    }
+
+
 }
