@@ -66,7 +66,7 @@ uint16_t colorWheel(uint8_t pos) {
 
 //void IRAM_ATTR nowPressed(){
 //  incidenttime=epochtime;
-//  dma_display->setCursor(50, 0);
+//  dma_display->setCursor(5, 0);
 //  dma_display->print("down");
 //  delay(2000);
 //  dma_display->fillScreen(dma_display->color444(0, 0, 0));
@@ -77,9 +77,11 @@ void drawText(int colorWheelOffset)
 {
   //get the current time fron ntp server
 
-  if(counter%50==0){
+  if(counter%5000==0){
       timeClient.update(); 
       epochtime = timeClient.getEpochTime();                                                   //update time in 50 cuycles    
+      dma_display->fillScreen(dma_display->color444(0, 0, 0));
+
   }
 
   days=(epochtime-incidenttime)/86400;
@@ -87,26 +89,26 @@ void drawText(int colorWheelOffset)
   //dma_display->fillScreen(dma_display->color444(0, 0, 0));
   
 
-if (days < 10){
-  fStart=9 ;
-  fSize=3;
-  fStarty=1;
- }
- else if (days < 100){
-  fStart=5 ;
-  fSize=2;
-  fStarty=6;
- }
- else if (days < 1000){
-  fStart=0 ;
-  fSize=2;
-  fStarty=6;
- }
- else {
-   ;
- }
+  if (days < 10){
+    fStart=9 ;
+    fSize=3;
+    fStarty=1;
+  }
+  else if (days < 100){
+    fStart=5 ;
+    fSize=2;
+    fStarty=6;
+  }
+  else if (days < 1000){
+    fStart=0 ;
+    fSize=2;
+    fStarty=6;
+  }
+  else {
+    ;
+  }
  
-
+ 
   //dma_display->setFont(&FreeMonoBoldOblique12pt7b);
   dma_display->setTextSize(fSize);     // size 1 == 8 pixels high
   dma_display->setTextWrap(false); // Do wrap at end of line - cant do ourselves
@@ -130,7 +132,7 @@ if (days < 10){
   //  dma_display->print("*");
   //}
   dma_display->setTextSize(1);  
-  dma_display->setCursor(5,25);
+  dma_display->setCursor(5,24);
   dma_display->setTextColor(dma_display->color444(5,5,5));
   dma_display->println("DAYS");
 
@@ -146,10 +148,26 @@ if (days < 10){
   dma_display->setTextColor(dma_display->color444(5,5,5));
   dma_display->print("SINCE");
 
+  if (day(incidenttime)< 10){
+    fStart=43 ;
+    fSize=1;
+    fStarty=12;
+    dma_display->setCursor(37,12);  
+    dma_display->print("0");
+    
+  }
+  else {
+    fStart=37 ;
+    fSize=1;
+    fStarty=12;
+  }
+
   
-  dma_display->setTextColor(dma_display->color444(10,4,4));
+  dma_display->setTextColor(dma_display->color444(15,2,2));
   dma_display->setTextSize(1);  
-  dma_display->setCursor(36,12);
+  //dma_display->setCursor(37,12);
+  dma_display->setCursor(fStart,fStarty);
+  
   dma_display->print(day(incidenttime));
 
   dma_display->setCursor(47,12);
@@ -157,8 +175,22 @@ if (days < 10){
 
   //dma_display->drawPixel(43,19,5000);
 
+  if (month(incidenttime)< 10){
+    fStart=58 ;
+    fSize=1;
+    fStarty=12;
+    dma_display->setCursor(51,12);  
+    dma_display->print("0");
+  }
+  else{
+    fStart=51 ;
+    fSize=1;
+    fStarty=12;
+  }
+
   dma_display->setTextSize(1);  
-  dma_display->setCursor(51,12);
+  //dma_display->setCursor(51,12);
+  dma_display->setCursor(fStart,fStarty);  
   dma_display->print(month(incidenttime));
 
 
@@ -171,6 +203,7 @@ if (days < 10){
   dma_display->drawRect(35, 10, 29, 21, dma_display->color444(8,2,2));
 
   counter ++;
+
 
 }
 
@@ -201,7 +234,7 @@ void setup() {
   // Display Setup
   dma_display = new MatrixPanel_I2S_DMA(mxconfig);
   dma_display->begin();
-  dma_display->setBrightness8(90); //0-255
+  dma_display->setBrightness8(200); //0-255
   dma_display->clearScreen();
  // dma_display->setRotation(2)
   dma_display->fillScreen(myWHITE);
@@ -303,6 +336,5 @@ void loop() {
     if(digitalRead(nowButton_pin)==LOW){
       incidenttime= epochtime;
     }
-
 
 }
