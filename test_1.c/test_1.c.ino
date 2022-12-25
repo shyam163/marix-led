@@ -10,8 +10,6 @@
 #include <Preferences.h>
 #include <WiFiManager.h> 
 #include <TimeLib.h>
-#include <Fonts/FreeMonoBoldOblique12pt7b.h>
-#include <Fonts/FreeSerif9pt7b.h>
 
 
 #define PANEL_RES_X 64              // Number of pixels wide of each INDIVIDUAL panel module. 
@@ -41,7 +39,8 @@ uint16_t myBLUE = dma_display->color565(0, 0, 255);
 
 uint counter=1;
 int epochtime=0;
-int incidenttime=1671366600;
+//int incidenttime=1671366600;
+int incidenttime=0;
 int days=0;
 int  fSize=3;
 int  fStart=4;
@@ -211,15 +210,16 @@ void drawText(int colorWheelOffset)
 void setup() {
 
   //dma_display->setFont(&FreeMonoBoldOblique12pt7b);
-
   pinMode(upButton_pin, INPUT_PULLUP);                                  //initialize button pins
-//  attachInterrupt(upButton_pin,upPressed, RISING);               //and ISR
+  //  attachInterrupt(upButton_pin,upPressed, RISING);               //and ISR
   pinMode(up25Button_pin, INPUT_PULLUP);
-//  attachInterrupt(up25Button_pin,up25Pressed, RISING);
+  //  attachInterrupt(up25Button_pin,up25Pressed, RISING);
   pinMode(nowButton_pin, INPUT_PULLUP);
-//  attachInterrupt(nowButton_pin,nowPressed, RISING);
+  //  attachInterrupt(nowButton_pin,nowPressed, RISING);
 
-
+  preferences.begin("signboard", false);
+  incidenttime = preferences.getUInt("incidentstored",0);
+  preferences.end();
   // Module configuration19800
   HUB75_I2S_CFG mxconfig(
     PANEL_RES_X,                         // module width
@@ -332,6 +332,9 @@ void loop() {
 //      dma_display->fillScreen(dma_display->color444(0, 0, 0));
       dma_display->setCursor(50, 0);
       dma_display->fillScreen(dma_display->color444(0, 0, 0));
+      preferences.begin("signboard", false);
+      preferences.putUInt("incidentstored",incidenttime);
+      preferences.end();
     }
     if(digitalRead(nowButton_pin)==LOW){
       incidenttime= epochtime;
