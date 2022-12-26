@@ -1,6 +1,11 @@
 
 // information board on a 64x32 LED matrix to show how many days passed 
 // since the last saftey incident happened
+// the board is connected to the internet and gets the time from a NTP server
+// the incident date is set by a button on the board
+// the board is powered by a 5V power supply and the LED matrix is powered by a 5V power supply
+// the board is connected to the LED matrix via a level shifters
+
 
 #include <ESP32-HUB75-MatrixPanel-I2S-DMA.h>
 #include <ESP32-VirtualMatrixPanel-I2S-DMA.h>
