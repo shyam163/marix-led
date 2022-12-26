@@ -108,7 +108,6 @@ void drawText(int colorWheelOffset)
   }
  
   //dma_display->clearScreen();
-  //dma_display->setFont(&FreeMonoBoldOblique12pt7b);
   dma_display->setTextSize(fSize);     // size 1 == 8 pixels high
   dma_display->setTextWrap(false); // Do wrap at end of line - cant do ourselves
   dma_display->setCursor(fStart,fStarty);    // start at top left, with 8 pixel of spacing
