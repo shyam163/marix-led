@@ -45,6 +45,7 @@ int days=0;
 int  fSize=3;
 int  fStart=4;
 int fStarty=1;
+int faster=0;
 
 // Input a value 0 to 255 to get a color value.
 // The colours are a transition r - g - b - back to r.
@@ -80,7 +81,6 @@ void drawText(int colorWheelOffset)
       timeClient.update(); 
       epochtime = timeClient.getEpochTime();                                                   //update time in 50 cuycles    
       dma_display->fillScreen(dma_display->color444(0, 0, 0));
-
   }
 
   days=(epochtime-incidenttime)/86400;
@@ -107,7 +107,7 @@ void drawText(int colorWheelOffset)
     ;
   }
  
- 
+  //dma_display->clearScreen();
   //dma_display->setFont(&FreeMonoBoldOblique12pt7b);
   dma_display->setTextSize(fSize);     // size 1 == 8 pixels high
   dma_display->setTextWrap(false); // Do wrap at end of line - cant do ourselves
@@ -147,7 +147,8 @@ void drawText(int colorWheelOffset)
   dma_display->setTextColor(dma_display->color444(5,5,5));
   dma_display->print("SINCE");
 
-  if (day(incidenttime)< 10){
+  days=day(incidenttime);
+  if (days< 10){
     fStart=43 ;
     fSize=1;
     fStarty=12;
@@ -167,14 +168,16 @@ void drawText(int colorWheelOffset)
   //dma_display->setCursor(37,12);
   dma_display->setCursor(fStart,fStarty);
   
-  dma_display->print(day(incidenttime));
+  dma_display->print(days);
 
   dma_display->setCursor(47,12);
   dma_display->print(":");
 
   //dma_display->drawPixel(43,19,5000);
 
-  if (month(incidenttime)< 10){
+  days=month(incidenttime);   //shouldhav been months , just using dsame vairable
+ 
+  if (days< 10){                        //is months
     fStart=58 ;
     fSize=1;
     fStarty=12;
@@ -190,13 +193,13 @@ void drawText(int colorWheelOffset)
   dma_display->setTextSize(1);  
   //dma_display->setCursor(51,12);
   dma_display->setCursor(fStart,fStarty);  
-  dma_display->print(month(incidenttime));
+  dma_display->print(days);                         //is months
 
 
-  dma_display->setCursor(38,21);            //+9y
+  dma_display->setCursor(38,21);            
   dma_display->print(year(incidenttime));
 
-  dma_display->setCursor(38,22);            //+9y
+  dma_display->setCursor(38,22);           
   dma_display->print(year(incidenttime));
 
   dma_display->drawRect(35, 10, 29, 21, dma_display->color444(8,2,2));
@@ -326,18 +329,30 @@ void loop() {
     // animate by going through the colour wheel for the first two lines
     drawText(wheelval);
     wheelval +=1;
-    delay(20); 
+    delay(10);
     if(digitalRead(upButton_pin)==LOW){
       incidenttime= incidenttime-8400;
-//      dma_display->fillScreen(dma_display->color444(0, 0, 0));
       dma_display->setCursor(50, 0);
       dma_display->fillScreen(dma_display->color444(0, 0, 0));
       preferences.begin("signboard", false);
       preferences.putUInt("incidentstored",incidenttime);
       preferences.end();
+      faster=faster+1;
     }
-    if(digitalRead(nowButton_pin)==LOW){
-      incidenttime= epochtime;
+    else if(digitalRead(nowButton_pin)==LOW){
+      incidenttime= incidenttime+8400;
+      if(incidenttime>epochtime){
+        incidenttime=epochtime;
+      }
+      dma_display->setCursor(50, 0);
+
+      dma_display->fillScreen(dma_display->color444(0, 0, 0));
+      preferences.begin("signboard", false);
+      preferences.putUInt("incidentstored",incidenttime);
+      preferences.end();
+    }
+    else{
+         
     }
 
 }
