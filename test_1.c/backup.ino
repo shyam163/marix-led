@@ -1,12 +1,3 @@
-/*
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License
-as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied 
-warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-You should have received a copy of the GNU General Public License along with this program. If not, see 
-<https://www.gnu.org/licenses/>. 
-*/
-
 
 // information board on a 64x32 LED matrix to show how many days passed
 // since the last saftey incident happened
@@ -32,12 +23,12 @@ You should have received a copy of the GNU General Public License along with thi
 #define up25Button_pin 18 // pin to move the incident date 25 days back wards
 #define nowButton_pin 21  // pin to move the incident date to now
 
-const char* ntpServer = "in.pool.ntp.org"; // NTP server to use for time sync (in India) 
+const char* ntpServer = "in.pool.ntp.org";
 
 WiFiUDP ntpUDP; // Define NTP Client to get time
-NTPClient timeClient(ntpUDP);           // NTP client to get time
+NTPClient timeClient(ntpUDP);
 
-Preferences preferences; // Preferences to save the incident date in the flash memory of the ESP32 board 
+Preferences preferences;
 
 String formattedDate; // Variables to save date and time
 String dayStamp;
@@ -94,8 +85,7 @@ uint16_t colorWheel(uint8_t pos)
 //   dma_display->fillScreen(dma_display->color444(0, 0, 0));
 // }
 
-//
-void drawText(int colorWheelOffset)  
+void drawText(int colorWheelOffset)
 {
   // get the current time fron ntp server
 
@@ -119,7 +109,6 @@ void drawText(int colorWheelOffset)
 
   //timeClient.update();
 
-  //
   while(!timeClient.update()) {
     timeClient.forceUpdate();
     delay(1000);
@@ -133,7 +122,7 @@ void drawText(int colorWheelOffset)
     dma_display->fillScreen(dma_display->color444(0, 0, 0));
   }
 
-  days = (epochtime - incidenttime) / 86400; // calculate days passed since incident date 
+  days = (epochtime - incidenttime) / 86400;
   // fill black : screen
   // dma_display->fillScreen(dma_display->color444(0, 0, 0));
 
